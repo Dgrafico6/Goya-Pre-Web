@@ -1,0 +1,77 @@
+﻿@model SpecificationFilterModel
+@{
+    var cont = 0;
+}
+
+<div class="product-filter product-spec-filter widget widget-filter mb-4 pb-4">
+    <div class="mb-2 d-flex justify-content-between">
+        <h3 class="widget-title">@T("Filtering.SpecificationFilter")</h3>
+        @*<a data-bs-toggle="collapse" href="#collapseExample_@cont" aria-expanded="true" aria-controls="collapseExample_@cont" class="widget-collapse"><i class="bi bi-list"></i></a>*@
+    </div>
+    <div class="filter-content collapse show" id="collapseExample_@cont">
+        @foreach (var attr in Model.Attributes)
+        {
+            cont += 1;
+            <div class="mb-2 d-flex justify-content-between">
+                <span class="widget-sub-title">@attr.Name</span>
+                <a data-bs-toggle="collapse" href="#collapseExample_@cont" aria-expanded="true" aria-controls="collapseExample_@cont" class="widget-collapse"><i class="bi bi-list"></i></a>
+            </div>
+            <div class="collapse show" id="collapseExample_@cont">
+                <ul class="group product-spec-group @(attr.Values.Any(x => !string.IsNullOrEmpty(x.ColorSquaresRgb)) ? "product-spec-color " : null)widget-list widget-filter-list list-unstyled pt-1" style="max-height: 11rem;" data-simplebar data-simplebar-auto-hide="false">
+                
+                    @foreach (var value in attr.Values)
+                    {
+                        
+                        <li class="item widget-filter-item @(!string.IsNullOrEmpty(value.ColorSquaresRgb) ? "color-item" : "mb-1 me-3")">
+                            <div class="form-check">
+                                <input id="attribute-option-@value.Id" data-option-id="@value.Id" class="form-check-input" type="checkbox" checked="@value.Selected">
+                            
+                                @if (string.IsNullOrEmpty(value.ColorSquaresRgb))
+                                {
+                                    <label class="form-check-label widget-filter-item-text text-accent" for="attribute-option-@value.Id">@value.Name</label>
+                                }
+                                else
+                                {
+                                    var variantClass = "attribute-square";
+                                    var upperHex = value.ColorSquaresRgb.ToUpper();
+
+                                    if((upperHex.StartsWith("#F") && !upperHex.Contains("0")))
+                                    {
+                                        variantClass += " border border-dark";
+                                    }
+
+                                    <label for="attribute-option-@value.Id" class="attribute-squares color-squares text-accent">
+                                        <span class="@variantClass" style="background-color: @(value.ColorSquaresRgb);"></span>
+                                            @value.Name
+                                    </label>
+                                }
+                            </div>
+                        
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+    </div>
+</div>
+<script asp-location="Footer">
+    $(document).ready(function () {
+        var $optionEls = $('[data-option-id]');
+        $optionEls.on('change', function () {
+            CatalogProducts.getProducts();
+        });
+
+        $(CatalogProducts).on('before', function (e) {
+            var selectedOptions = $.map($optionEls, function (el) {
+                var $optionEl = $(el);
+                if ($optionEl.is(':checked')) return $optionEl.data('option-id');
+                return null;
+            });
+
+            if (selectedOptions && selectedOptions.length > 0) {
+                e.payload.urlBuilder
+                    .addParameter('specs', selectedOptions.join(','));
+            }
+        });
+    });
+</script>
